@@ -92,20 +92,29 @@ get_stats() ->
     Opts :: [proplists:property()].
 expand_metric({Name, Opts}) ->
     case proplists:get_value(type, Opts) of
-            undefined -> [];
-            histogram ->
-                Stats = folsom_metrics:get_histogram_statistics(Name),
-                M = proplists:delete(histogram, Stats),
-                expand0(M, [Name]);
-            Type ->
-                case lists:member(Type,
-                                  [counter, gauge, meter, meter_reader]) of
-                    true ->
-                        M = folsom_metrics:get_metric_value(Name),
-                        expand0(M, [Name]);
-                    false -> []
-                end
-        end;
+        undefined -> [];
+        histogram ->
+            Stats = try folsom_metrics:get_histogram_statistics(Name)
+                    catch
+                        E:C ->
+                            error_logger:info_msg(
+                                "Error expand_metric(~p, ~p) => [ ~p ]:[ ~p ]",
+                                [Name, Opts, E, C]),
+                            %% In case of error use a 0 values
+                            %% Will brake statistics but keep release running
+                            bear:get_statistics([])
+                    end,
+            M = proplists:delete(histogram, Stats),
+            expand0(M, [Name]);
+        Type ->
+            case lists:member(Type,
+                [counter, gauge, meter, meter_reader]) of
+                true ->
+                    M = folsom_metrics:get_metric_value(Name),
+                    expand0(M, [Name]);
+                false -> []
+            end
+    end;
 expand_metric(_) ->
     [].
 

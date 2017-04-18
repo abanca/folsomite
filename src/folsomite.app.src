@@ -2,7 +2,7 @@
 {application, folsomite,
  [
   {description, "blow up your graphite server with folsom metrics"},
-  {vsn, "no_zeta_1.0.1"},
+  {vsn, "no_zeta_1.0.2"},
   {registered, [folsomite_sup,
                 folsomite_server,
                 folsomite_graphite_client_sup
